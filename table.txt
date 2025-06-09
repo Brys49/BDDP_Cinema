@@ -1,0 +1,10 @@
+cqlsh> CREATE KEYSPACE cinema
+   ... with replication = {'class': 'SimpleStrategy', 'replication_factor': 2};
+cqlsh> USE cinema ;
+cqlsh:cinema> CREATE TABLE reservations (
+          ... show_id text,
+          ... seat_id text,
+          ... user_id text,
+          ... reservation_time timestamp,
+          ... PRIMARY KEY ((show_id), seat_id));
+

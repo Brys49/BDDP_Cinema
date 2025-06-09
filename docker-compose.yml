@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  cinema-node1:
+    image: cassandra:4.1
+    container_name: cinema-node1
+    environment:
+      - CASSANDRA_CLUSTER_NAME=CinemaCluster
+      - CASSANDRA_NUM_TOKENS=256
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - "MAX_HEAP_SIZE=1G"
+      - "HEAP_NEWSIZE=256M"
+    ports:
+      - "9042:9042"
+    networks:
+      - cinema-net
+    volumes:
+      - cinema-node1_data:/var/lib/cassandra
+
+  cinema-node2:
+    image: cassandra:4.1
+    container_name: cinema-node2
+    depends_on:
+      - cinema-node1
+    environment:
+      - CASSANDRA_CLUSTER_NAME=CinemaCluster
+      - CASSANDRA_NUM_TOKENS=256
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_SEEDS=cinema-node1
+      - "MAX_HEAP_SIZE=1G"
+      - "HEAP_NEWSIZE=256M"
+    networks:
+      - cinema-net
+    volumes:
+      - cinema-node2_data:/var/lib/cassandra
+
+networks:
+  cinema-net:
+    driver: bridge
+
+volumes:
+  cinema-node1_data:
+  cinema-node2_data:
