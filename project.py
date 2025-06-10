@@ -1,5 +1,4 @@
 from cassandra.cluster import Cluster
-from cassandra.query import SimpleStatement
 from datetime import datetime
 import sys
 import time
@@ -24,12 +23,35 @@ def choose_node():
         print("Invalid choice, defaulting to Node 1")
         return NODE_1_IP
 
+
+def check_keyspace_and_table(session):
+    session.execute("""
+        CREATE KEYSPACE IF NOT EXISTS cinema
+        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}
+    """)
+    
+    session.set_keyspace('cinema')
+
+    session.execute("""
+        CREATE TABLE IF NOT EXISTS reservations (
+            show_id text,
+            seat_id text,
+            user_id text,
+            reservation_time timestamp,
+            PRIMARY KEY ((show_id), seat_id)
+        )
+    """)
+
+
 def connect_to_cluster():
     contact_points = choose_node()
     cluster = Cluster(contact_points)
     session = cluster.connect()
     print("==================================")
     print(f"Connected to {contact_points[0]}")
+
+    check_keyspace_and_table(session)
+
     return cluster, session
 
 
@@ -202,10 +224,9 @@ def clear_reservations(session):
         except Exception as e:
             print(f"Error clearing reservations: {e}")
     else:
-        print("ℹ️ Clear operation canceled.")
+        print("Clear operation canceled.")
 
 
-# Function: Make a reservation
 def make_reservation(session, show_id, seat_id, user_id):
     reservation_time = datetime.now()
     query = """
@@ -257,7 +278,6 @@ def update_reservation(session, show_id, old_seat_id, new_seat_id, user_id):
     delete_query = "DELETE FROM reservations WHERE show_id = %s AND seat_id = %s"
     session.execute(delete_query, (show_id, old_seat_id))
     print(f"Seat updated from {old_seat_id} to {new_seat_id}")
-
 
 
 def view_my_reservations(session, user_id):
@@ -357,7 +377,6 @@ def main():
 ▄█▄ ▄▄▀ ▀▄▄▀ █▄▄█ ▄▄▀ █▄▄
 """)
     cluster, session = connect_to_cluster()
-    session.set_keyspace('cinema')
 
     while True:
         print("==================================")
